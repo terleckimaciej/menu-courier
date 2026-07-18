@@ -26,7 +26,7 @@ def record_sent_menu(
     post_id: str,
     post_date: date,
     text: str | None,
-    image_url: str | None,
+    image_urls: list[str],
     status: str,
 ) -> SentMenu:
     sent_menu = SentMenu(
@@ -34,7 +34,7 @@ def record_sent_menu(
         post_id=post_id,
         post_date=post_date,
         text=text,
-        image_url=image_url,
+        image_urls=image_urls,
         status=status,
     )
     session.add(sent_menu)
