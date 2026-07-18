@@ -1,0 +1,46 @@
+import argparse
+
+from menu_courier.pipeline import run
+from menu_courier.storage.db import SessionLocal
+from menu_courier.storage.models import Subscription
+
+
+def add_subscription(
+    platform: str, source_handle: str, recipient_psid: str, recipient_label: str
+) -> None:
+    with SessionLocal() as session:
+        session.add(
+            Subscription(
+                platform=platform,
+                source_handle=source_handle,
+                recipient_psid=recipient_psid,
+                recipient_label=recipient_label,
+            )
+        )
+        session.commit()
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(prog="menu-courier")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    subparsers.add_parser("run")
+
+    add_parser = subparsers.add_parser("add-subscription")
+    add_parser.add_argument("--platform", required=True)
+    add_parser.add_argument("--source-handle", required=True)
+    add_parser.add_argument("--recipient-psid", required=True)
+    add_parser.add_argument("--recipient-label", required=True)
+
+    args = parser.parse_args()
+
+    if args.command == "run":
+        run()
+    elif args.command == "add-subscription":
+        add_subscription(
+            args.platform, args.source_handle, args.recipient_psid, args.recipient_label
+        )
+
+
+if __name__ == "__main__":
+    main()
