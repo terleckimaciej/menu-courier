@@ -1,6 +1,7 @@
 from datetime import date, datetime
 
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import ForeignKey, String, UniqueConstraint
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -12,7 +13,8 @@ class Subscription(Base):
     __tablename__ = "subscriptions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    facebook_page_name: Mapped[str]
+    platform: Mapped[str]
+    source_handle: Mapped[str]
     recipient_psid: Mapped[str]
     recipient_label: Mapped[str]
     active: Mapped[bool] = mapped_column(default=True)
@@ -32,7 +34,7 @@ class SentMenu(Base):
     post_id: Mapped[str]
     post_date: Mapped[date]
     text: Mapped[str | None]
-    image_url: Mapped[str | None]
+    image_urls: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
     status: Mapped[str]
     sent_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
