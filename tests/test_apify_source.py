@@ -13,6 +13,7 @@ def test_get_latest_post_parses_response():
                 "postId": "123",
                 "text": "hello",
                 "time": "2026-07-17T12:00:00.000Z",
+                "user": {"name": "Example Page"},
                 "media": [
                     {"__typename": "Photo", "photo_image": {"uri": "https://example.com/a.jpg"}},
                     {"__typename": "Video", "photo_image": {"uri": "https://example.com/b.mp4"}},
@@ -25,6 +26,7 @@ def test_get_latest_post_parses_response():
     post = ApifySource().get_latest_post("https://www.facebook.com/example")
 
     assert post.post_id == "123"
+    assert post.source_name == "Example Page"
     assert post.text == "hello"
     assert post.image_urls == ["https://example.com/a.jpg"]
 
