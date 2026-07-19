@@ -6,6 +6,7 @@ from menu_courier.messenger.client import MessengerClient
 from menu_courier.scraping.factory import get_post_source
 from menu_courier.storage import repository
 from menu_courier.storage.db import SessionLocal
+from menu_courier.scraping.base import Post
 from menu_courier.storage.models import Subscription
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ def _process_subscription(session, subscription: Subscription, messenger: Messen
 
     try:
         if post.text:
-            messenger.send_text(subscription.recipient_psid, post.text)
+            messenger.send_text(subscription.recipient_psid, _build_message_text(post))
         for image_url in post.image_urls:
             messenger.send_image(subscription.recipient_psid, image_url)
         status = "sent"
@@ -49,3 +50,9 @@ def _process_subscription(session, subscription: Subscription, messenger: Messen
         image_urls=post.image_urls,
         status=status,
     )
+
+
+def _build_message_text(post: Post) -> str:
+    if not post.source_name:
+        return post.text
+    return f"🍽️ {post.source_name}\n\n{post.text}"

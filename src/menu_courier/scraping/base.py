@@ -6,6 +6,7 @@ from typing import Protocol
 @dataclass
 class Post:
     post_id: str
+    source_name: str | None
     text: str | None
     image_urls: list[str]
     posted_at: datetime

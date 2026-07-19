@@ -39,6 +39,7 @@ def _to_post(item: dict) -> Post:
     ]
     return Post(
         post_id=item["postId"],
+        source_name=item.get("user", {}).get("name"),
         text=item.get("text"),
         image_urls=image_urls,
         posted_at=datetime.fromisoformat(item["time"]),

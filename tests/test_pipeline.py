@@ -19,6 +19,7 @@ def _make_subscription() -> Subscription:
 def _make_post(**overrides) -> Post:
     defaults = dict(
         post_id="1",
+        source_name="Example Page",
         text="menu",
         image_urls=["https://example.com/a.jpg"],
         posted_at=datetime(2026, 7, 17, 12, 0, tzinfo=timezone.utc),
@@ -37,7 +38,7 @@ def test_sends_and_records_sent_when_post_is_new(monkeypatch):
 
     pipeline._process_subscription(MagicMock(), _make_subscription(), messenger)
 
-    messenger.send_text.assert_called_once_with("psid123", "menu")
+    messenger.send_text.assert_called_once_with("psid123", "🍽️ Example Page\n\nmenu")
     messenger.send_image.assert_called_once_with("psid123", "https://example.com/a.jpg")
     assert record_mock.call_args.kwargs["status"] == "sent"
 
