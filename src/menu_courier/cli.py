@@ -11,6 +11,7 @@ def add_subscription(
     recipient_psid: str,
     recipient_label: str,
     text_filter: str | None = None,
+    send_images: bool = True,
 ) -> None:
     with SessionLocal() as session:
         session.add(
@@ -20,6 +21,7 @@ def add_subscription(
                 recipient_psid=recipient_psid,
                 recipient_label=recipient_label,
                 text_filter=text_filter,
+                send_images=send_images,
             )
         )
         session.commit()
@@ -37,6 +39,7 @@ def main() -> None:
     add_parser.add_argument("--recipient-psid", required=True)
     add_parser.add_argument("--recipient-label", required=True)
     add_parser.add_argument("--text-filter", default=None)
+    add_parser.add_argument("--no-images", action="store_true")
 
     args = parser.parse_args()
 
@@ -49,6 +52,7 @@ def main() -> None:
             args.recipient_psid,
             args.recipient_label,
             args.text_filter,
+            not args.no_images,
         )
 
 
