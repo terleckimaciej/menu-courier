@@ -15,6 +15,7 @@ class Subscription(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     platform: Mapped[str]
     source_handle: Mapped[str]
+    text_filter: Mapped[str | None]
     recipient_psid: Mapped[str]
     recipient_label: Mapped[str]
     active: Mapped[bool] = mapped_column(default=True)
