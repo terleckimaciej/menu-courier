@@ -21,7 +21,12 @@ def run() -> None:
 
 def _process_subscription(session, subscription: Subscription, messenger: MessengerClient) -> None:
     source = get_post_source(subscription.platform)
-    post = source.get_latest_post(subscription.source_handle, subscription.text_filter)
+    try:
+        post = source.get_latest_post(subscription.source_handle, subscription.text_filter)
+    except Exception:
+        logger.exception("Failed to fetch post for subscription %s", subscription.id)
+        return
+
     if post is None:
         return
 
@@ -32,8 +37,9 @@ def _process_subscription(session, subscription: Subscription, messenger: Messen
     try:
         if post.text:
             messenger.send_text(subscription.recipient_psid, _build_message_text(post))
-        for image_url in post.image_urls:
-            messenger.send_image(subscription.recipient_psid, image_url)
+        if subscription.send_images:
+            for image_url in post.image_urls:
+                messenger.send_image(subscription.recipient_psid, image_url)
         status = "sent"
     except Exception:
         logger.exception(

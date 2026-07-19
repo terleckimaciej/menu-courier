@@ -18,6 +18,7 @@ class Subscription(Base):
     text_filter: Mapped[str | None]
     recipient_psid: Mapped[str]
     recipient_label: Mapped[str]
+    send_images: Mapped[bool] = mapped_column(default=True)
     active: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
