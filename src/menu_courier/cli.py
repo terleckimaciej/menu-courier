@@ -6,7 +6,11 @@ from menu_courier.storage.models import Subscription
 
 
 def add_subscription(
-    platform: str, source_handle: str, recipient_psid: str, recipient_label: str
+    platform: str,
+    source_handle: str,
+    recipient_psid: str,
+    recipient_label: str,
+    text_filter: str | None = None,
 ) -> None:
     with SessionLocal() as session:
         session.add(
@@ -15,6 +19,7 @@ def add_subscription(
                 source_handle=source_handle,
                 recipient_psid=recipient_psid,
                 recipient_label=recipient_label,
+                text_filter=text_filter,
             )
         )
         session.commit()
@@ -31,6 +36,7 @@ def main() -> None:
     add_parser.add_argument("--source-handle", required=True)
     add_parser.add_argument("--recipient-psid", required=True)
     add_parser.add_argument("--recipient-label", required=True)
+    add_parser.add_argument("--text-filter", default=None)
 
     args = parser.parse_args()
 
@@ -38,7 +44,11 @@ def main() -> None:
         run()
     elif args.command == "add-subscription":
         add_subscription(
-            args.platform, args.source_handle, args.recipient_psid, args.recipient_label
+            args.platform,
+            args.source_handle,
+            args.recipient_psid,
+            args.recipient_label,
+            args.text_filter,
         )
 
 

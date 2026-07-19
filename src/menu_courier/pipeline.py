@@ -20,7 +20,7 @@ def run() -> None:
 
 def _process_subscription(session, subscription: Subscription, messenger: MessengerClient) -> None:
     source = get_post_source(subscription.platform)
-    post = source.get_latest_post(subscription.source_handle)
+    post = source.get_latest_post(subscription.source_handle, subscription.text_filter)
     if post is None:
         return
 

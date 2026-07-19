@@ -12,4 +12,6 @@ class Post:
 
 
 class PostSource(Protocol):
-    def get_latest_post(self, source_handle: str) -> Post | None: ...
+    def get_latest_post(
+        self, source_handle: str, text_filter: str | None = None
+    ) -> Post | None: ...
