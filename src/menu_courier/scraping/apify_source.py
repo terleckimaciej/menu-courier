@@ -16,7 +16,7 @@ class ApifySource:
             headers={"Authorization": f"Bearer {settings.apify_api_token}"},
             json={
                 "startUrls": [{"url": source_handle}],
-                "onlyPostsNewerThan": "2 days",
+                "onlyPostsNewerThan": "3 days",
                 "resultsLimit": 5,
             },
             timeout=120,
@@ -25,6 +25,8 @@ class ApifySource:
         items = response.json()
 
         for item in items:
+            if "postId" not in item:
+                continue
             if text_filter is None or text_filter.lower() in (item.get("text") or "").lower():
                 return _to_post(item)
 
@@ -33,9 +35,10 @@ class ApifySource:
 
 def _to_post(item: dict) -> Post:
     image_urls = [
-        media["photo_image"]["uri"]
+        uri
         for media in item.get("media", [])
         if media.get("__typename") == "Photo"
+        and (uri := media.get("photo_image", {}).get("uri"))
     ]
     return Post(
         post_id=item["postId"],

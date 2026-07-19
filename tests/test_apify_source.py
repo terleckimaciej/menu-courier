@@ -38,3 +38,17 @@ def test_get_latest_post_returns_none_when_no_items():
     post = ApifySource().get_latest_post("https://www.facebook.com/example")
 
     assert post is None
+
+
+@responses.activate
+def test_get_latest_post_skips_apify_error_items():
+    responses.add(
+        responses.POST,
+        _RUN_SYNC_URL,
+        json=[{"inputUrl": "https://www.facebook.com/example", "error": "no_items"}],
+        status=200,
+    )
+
+    post = ApifySource().get_latest_post("https://www.facebook.com/example")
+
+    assert post is None

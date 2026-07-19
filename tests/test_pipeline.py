@@ -6,14 +6,16 @@ from menu_courier.scraping.base import Post
 from menu_courier.storage.models import Subscription
 
 
-def _make_subscription() -> Subscription:
-    return Subscription(
+def _make_subscription(**overrides) -> Subscription:
+    defaults = dict(
         id=1,
         platform="facebook",
         source_handle="https://www.facebook.com/example",
         recipient_psid="psid123",
         recipient_label="Test",
+        send_images=True,
     )
+    return Subscription(**{**defaults, **overrides})
 
 
 def _make_post(**overrides) -> Post:
@@ -41,6 +43,21 @@ def test_sends_and_records_sent_when_post_is_new(monkeypatch):
     messenger.send_text.assert_called_once_with("psid123", "🍽️ Example Page\n\nmenu")
     messenger.send_image.assert_called_once_with("psid123", "https://example.com/a.jpg")
     assert record_mock.call_args.kwargs["status"] == "sent"
+
+
+def test_skips_images_when_send_images_is_false(monkeypatch):
+    fake_source = MagicMock(get_latest_post=MagicMock(return_value=_make_post()))
+    monkeypatch.setattr(pipeline, "get_post_source", lambda platform: fake_source)
+    monkeypatch.setattr(pipeline.repository, "is_already_sent", lambda *a, **k: False)
+    monkeypatch.setattr(pipeline.repository, "record_sent_menu", MagicMock())
+    messenger = MagicMock()
+
+    pipeline._process_subscription(
+        MagicMock(), _make_subscription(send_images=False), messenger
+    )
+
+    messenger.send_text.assert_called_once()
+    messenger.send_image.assert_not_called()
 
 
 def test_skips_when_already_sent(monkeypatch):
