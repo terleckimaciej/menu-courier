@@ -19,10 +19,14 @@ def run() -> None:
             _process_subscription(session, subscription, messenger)
 
 
-def _process_subscription(session, subscription: Subscription, messenger: MessengerClient) -> None:
+def _process_subscription(
+    session, subscription: Subscription, messenger: MessengerClient
+) -> None:
     source = get_post_source(subscription.platform)
     try:
-        post = source.get_latest_post(subscription.source_handle, subscription.text_filter)
+        post = source.get_latest_post(
+            subscription.source_handle, subscription.text_filter
+        )
     except Exception:
         logger.exception("Failed to fetch post for subscription %s", subscription.id)
         return
@@ -43,7 +47,9 @@ def _process_subscription(session, subscription: Subscription, messenger: Messen
         status = "sent"
     except Exception:
         logger.exception(
-            "Failed to deliver post %s for subscription %s", post.post_id, subscription.id
+            "Failed to deliver post %s for subscription %s",
+            post.post_id,
+            subscription.id,
         )
         status = "failed"
 
@@ -60,5 +66,5 @@ def _process_subscription(session, subscription: Subscription, messenger: Messen
 
 def _build_message_text(post: Post) -> str:
     if not post.source_name:
-        return post.text
+        return post.text or ""
     return f"🍽️ {post.source_name}\n\n{post.text}"
