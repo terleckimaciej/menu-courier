@@ -9,7 +9,9 @@ from menu_courier.messenger.client import MessengerClient
 
 @responses.activate
 def test_send_text_posts_expected_payload():
-    responses.add(responses.POST, client_module._BASE_URL, json={"message_id": "abc"}, status=200)
+    responses.add(
+        responses.POST, client_module._BASE_URL, json={"message_id": "abc"}, status=200
+    )
 
     MessengerClient().send_text("psid123", "hello")
 
