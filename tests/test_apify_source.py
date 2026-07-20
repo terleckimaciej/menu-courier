@@ -15,8 +15,14 @@ def test_get_latest_post_parses_response():
                 "time": "2026-07-17T12:00:00.000Z",
                 "user": {"name": "Example Page"},
                 "media": [
-                    {"__typename": "Photo", "photo_image": {"uri": "https://example.com/a.jpg"}},
-                    {"__typename": "Video", "photo_image": {"uri": "https://example.com/b.mp4"}},
+                    {
+                        "__typename": "Photo",
+                        "photo_image": {"uri": "https://example.com/a.jpg"},
+                    },
+                    {
+                        "__typename": "Video",
+                        "photo_image": {"uri": "https://example.com/b.mp4"},
+                    },
                 ],
             }
         ],

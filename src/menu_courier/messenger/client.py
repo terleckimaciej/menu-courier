@@ -28,4 +28,6 @@ class MessengerClient:
             timeout=30,
         )
         if not response.ok:
-            raise RuntimeError(f"Messenger API error ({response.status_code}): {response.text}")
+            raise RuntimeError(
+                f"Messenger API error ({response.status_code}): {response.text}"
+            )

@@ -6,11 +6,15 @@ from menu_courier.config import settings
 from menu_courier.scraping.base import Post
 
 _ACTOR_ID = "apify~facebook-posts-scraper"
-_RUN_SYNC_URL = f"https://api.apify.com/v2/actors/{_ACTOR_ID}/run-sync-get-dataset-items"
+_RUN_SYNC_URL = (
+    f"https://api.apify.com/v2/actors/{_ACTOR_ID}/run-sync-get-dataset-items"
+)
 
 
 class ApifySource:
-    def get_latest_post(self, source_handle: str, text_filter: str | None = None) -> Post | None:
+    def get_latest_post(
+        self, source_handle: str, text_filter: str | None = None
+    ) -> Post | None:
         response = requests.post(
             _RUN_SYNC_URL,
             headers={"Authorization": f"Bearer {settings.apify_api_token}"},
@@ -27,7 +31,10 @@ class ApifySource:
         for item in items:
             if "postId" not in item:
                 continue
-            if text_filter is None or text_filter.lower() in (item.get("text") or "").lower():
+            if (
+                text_filter is None
+                or text_filter.lower() in (item.get("text") or "").lower()
+            ):
                 return _to_post(item)
 
         return None
