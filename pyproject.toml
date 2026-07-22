@@ -16,6 +16,9 @@ dependencies = [
     "pydantic-settings (>=2.14.2,<3.0.0)",
 ]
 
+[project.scripts]
+menu-courier = "menu_courier.cli:main"
+
 [tool.poetry]
 packages = [{include = "menu_courier", from="src"}]
 
