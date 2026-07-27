@@ -1,8 +1,14 @@
 import argparse
 
+from menu_courier.messenger.client import MessengerClient
 from menu_courier.pipeline import run
 from menu_courier.storage.db import SessionLocal
 from menu_courier.storage.models import Subscription
+
+
+def list_recipients() -> None:
+    for name, psid in MessengerClient().list_recipients():
+        print(f"{name} — {psid}")
 
 
 def add_subscription(
@@ -32,6 +38,7 @@ def main() -> None:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     subparsers.add_parser("run")
+    subparsers.add_parser("list-recipients")
 
     add_parser = subparsers.add_parser("add-subscription")
     add_parser.add_argument("--platform", required=True)
@@ -45,6 +52,8 @@ def main() -> None:
 
     if args.command == "run":
         run()
+    elif args.command == "list-recipients":
+        list_recipients()
     elif args.command == "add-subscription":
         add_subscription(
             args.platform,
