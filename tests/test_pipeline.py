@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from unittest.mock import MagicMock
+from unittest.mock import ANY, MagicMock
 
 from menu_courier import pipeline
 from menu_courier.scraping.base import Post
@@ -58,6 +58,23 @@ def test_skips_images_when_send_images_is_false(monkeypatch):
 
     messenger.send_text.assert_called_once()
     messenger.send_image.assert_not_called()
+
+
+def test_dedupes_by_post_id_not_post_date(monkeypatch):
+    # Regression test: a subscription that already got today's post must not
+    # swallow a *different* post that happens to land on the same calendar
+    # date (e.g. published just before midnight for the next day's menu).
+    post = _make_post(post_id="distinct-post-id")
+    fake_source = MagicMock(get_latest_post=MagicMock(return_value=post))
+    monkeypatch.setattr(pipeline, "get_post_source", lambda platform: fake_source)
+    is_already_sent_mock = MagicMock(return_value=False)
+    monkeypatch.setattr(pipeline.repository, "is_already_sent", is_already_sent_mock)
+    monkeypatch.setattr(pipeline.repository, "record_sent_menu", MagicMock())
+    messenger = MagicMock()
+
+    pipeline._process_subscription(MagicMock(), _make_subscription(), messenger)
+
+    is_already_sent_mock.assert_called_once_with(ANY, 1, "distinct-post-id")
 
 
 def test_skips_when_already_sent(monkeypatch):

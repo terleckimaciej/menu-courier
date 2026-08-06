@@ -28,9 +28,7 @@ class Subscription(Base):
 class SentMenu(Base):
     __tablename__ = "sent_menus"
     __table_args__ = (
-        UniqueConstraint(
-            "subscription_id", "post_date", name="uq_subscription_post_date"
-        ),
+        UniqueConstraint("subscription_id", "post_id", name="uq_subscription_post_id"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
