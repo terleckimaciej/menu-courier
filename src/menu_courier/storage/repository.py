@@ -11,10 +11,10 @@ def get_active_subscriptions(session: Session) -> list[Subscription]:
     return list(session.scalars(stmt))
 
 
-def is_already_sent(session: Session, subscription_id: int, post_date: date) -> bool:
+def is_already_sent(session: Session, subscription_id: int, post_id: str) -> bool:
     stmt = select(SentMenu).where(
         SentMenu.subscription_id == subscription_id,
-        SentMenu.post_date == post_date,
+        SentMenu.post_id == post_id,
     )
     return session.scalars(stmt).first() is not None
 

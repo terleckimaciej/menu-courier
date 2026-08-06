@@ -34,9 +34,10 @@ def _process_subscription(
     if post is None:
         return
 
-    post_date = post.posted_at.astimezone(ZoneInfo(settings.timezone)).date()
-    if repository.is_already_sent(session, subscription.id, post_date):
+    if repository.is_already_sent(session, subscription.id, post.post_id):
         return
+
+    post_date = post.posted_at.astimezone(ZoneInfo(settings.timezone)).date()
 
     try:
         if post.text:
