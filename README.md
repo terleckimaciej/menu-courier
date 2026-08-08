@@ -13,7 +13,7 @@
 ![Ruff](https://img.shields.io/badge/Ruff-Lint%20%2B%20Format-D7FF64?logo=ruff&logoColor=black)
 ![pre-commit](https://img.shields.io/badge/pre--commit-Hooks-FAB040?logo=precommit&logoColor=white)
 
-A small, scheduled service that scrapes a local restaurant's daily menu post from Facebook and delivers it via Messenger — built mainly for Ms. Helena, an elderly family friend who has trouble with her vision and can't check Facebook herself to check what's for lunch.
+A small, scheduled service that scrapes subscribed Facebook pages and delivers new posts via Messenger — built mainly for Ms. Helena, an elderly family friend who has trouble with her vision and can't check Facebook herself to see the daily menu at her local lunch bars.
 
 It also doubles as a portfolio piece: the goal was to build it the way I would build anything meant for production at work — typed config, migrations, tests, CI, a
 container image, and a scheduled pipeline — rather than a one-off script.
@@ -21,7 +21,8 @@ container image, and a scheduled pipeline — rather than a one-off script.
 ## How it works
 
 ```mermaid
-flowchart LR
+%%{init: {'themeVariables': {'fontSize': '15px'}}}%%
+flowchart TB
     subgraph gh[GitHub]
         Actions[GitHub Actions<br/>cron scheduler]
         Registry[(GHCR<br/>image registry)]
