@@ -1,6 +1,6 @@
 [project]
 name = "menu-courier"
-version = "0.3.7"
+version = "1.0.0"
 description = "Scrapes a restaurant's Facebook daily menu and delivers it via Messenger"
 authors = [
     {name = "Maciej Terlecki",email = "maciek.terlecki1807@gmail.com"}
