@@ -220,3 +220,7 @@ __marimo__/
 
 # Editor
 .vscode/
+
+# Claude Code (personal settings only — .claude/settings.json, if ever
+# added, would be the shared/committed variant)
+.claude/settings.local.json
