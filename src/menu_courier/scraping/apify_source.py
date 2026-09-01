@@ -20,8 +20,8 @@ class ApifySource:
             headers={"Authorization": f"Bearer {settings.apify_api_token}"},
             json={
                 "startUrls": [{"url": source_handle}],
-                "onlyPostsNewerThan": "3 days",
-                "resultsLimit": 5,
+                "onlyPostsNewerThan": "2 days",
+                "resultsLimit": 2,
             },
             timeout=120,
         )
