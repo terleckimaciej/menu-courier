@@ -12,9 +12,7 @@ _RUN_SYNC_URL = (
 
 
 class ApifySource:
-    def get_latest_post(
-        self, source_handle: str, text_filter: str | None = None
-    ) -> Post | None:
+    def get_recent_posts(self, source_handle: str) -> list[Post]:
         response = requests.post(
             _RUN_SYNC_URL,
             headers={"Authorization": f"Bearer {settings.apify_api_token}"},
@@ -28,16 +26,7 @@ class ApifySource:
         response.raise_for_status()
         items = response.json()
 
-        for item in items:
-            if "postId" not in item:
-                continue
-            if (
-                text_filter is None
-                or text_filter.lower() in (item.get("text") or "").lower()
-            ):
-                return _to_post(item)
-
-        return None
+        return [_to_post(item) for item in items if "postId" in item]
 
 
 def _to_post(item: dict) -> Post:

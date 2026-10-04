@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from zoneinfo import ZoneInfo
 
 from menu_courier.config import settings
@@ -15,25 +16,36 @@ logger = logging.getLogger(__name__)
 def run() -> None:
     messenger = MessengerClient()
     with SessionLocal() as session:
+        # Fetch once per source, not once per subscription: scraping is the
+        # paid step, and subscriptions sharing a source see the same posts.
+        by_source: dict[tuple[str, str], list[Subscription]] = defaultdict(list)
         for subscription in repository.get_active_subscriptions(session):
-            _process_subscription(session, subscription, messenger)
+            by_source[(subscription.platform, subscription.source_handle)].append(
+                subscription
+            )
+
+        for (platform, source_handle), subscriptions in by_source.items():
+            try:
+                posts = get_post_source(platform).get_recent_posts(source_handle)
+            except Exception:
+                logger.exception(
+                    "Failed to fetch posts for %s (subscriptions %s)",
+                    source_handle,
+                    [s.id for s in subscriptions],
+                )
+                continue
+
+            for subscription in subscriptions:
+                post = next(
+                    (p for p in posts if p.matches(subscription.text_filter)), None
+                )
+                if post is not None:
+                    _process_subscription(session, subscription, post, messenger)
 
 
 def _process_subscription(
-    session, subscription: Subscription, messenger: MessengerClient
+    session, subscription: Subscription, post: Post, messenger: MessengerClient
 ) -> None:
-    source = get_post_source(subscription.platform)
-    try:
-        post = source.get_latest_post(
-            subscription.source_handle, subscription.text_filter
-        )
-    except Exception:
-        logger.exception("Failed to fetch post for subscription %s", subscription.id)
-        return
-
-    if post is None:
-        return
-
     if repository.is_already_sent(session, subscription.id, post.post_id):
         return
 
