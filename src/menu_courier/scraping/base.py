@@ -11,8 +11,9 @@ class Post:
     image_urls: list[str]
     posted_at: datetime
 
+    def matches(self, text_filter: str | None) -> bool:
+        return text_filter is None or text_filter.lower() in (self.text or "").lower()
+
 
 class PostSource(Protocol):
-    def get_latest_post(
-        self, source_handle: str, text_filter: str | None = None
-    ) -> Post | None: ...
+    def get_recent_posts(self, source_handle: str) -> list[Post]: ...
