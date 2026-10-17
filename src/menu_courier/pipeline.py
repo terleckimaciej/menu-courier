@@ -1,5 +1,5 @@
 import logging
-from collections import defaultdict
+from collections import Counter, defaultdict
 from zoneinfo import ZoneInfo
 
 from menu_courier.config import settings
@@ -24,6 +24,8 @@ def run() -> None:
                 subscription
             )
 
+        outcomes: Counter[str] = Counter()
+
         for (platform, source_handle), subscriptions in by_source.items():
             try:
                 posts = get_post_source(platform).get_recent_posts(source_handle)
@@ -33,21 +35,36 @@ def run() -> None:
                     source_handle,
                     [s.id for s in subscriptions],
                 )
+                outcomes["fetch_failed"] += len(subscriptions)
                 continue
 
             for subscription in subscriptions:
                 post = next(
                     (p for p in posts if p.matches(subscription.text_filter)), None
                 )
-                if post is not None:
-                    _process_subscription(session, subscription, post, messenger)
+                if post is None:
+                    outcome = "no_matching_post"
+                else:
+                    outcome = _process_subscription(
+                        session, subscription, post, messenger
+                    )
+                outcomes[outcome] += 1
+                logger.info(
+                    "subscription=%s source=%s post=%s outcome=%s",
+                    subscription.id,
+                    source_handle,
+                    post.post_id if post else "-",
+                    outcome,
+                )
+
+        logger.info("Run finished: %s", dict(outcomes) or "no active subscriptions")
 
 
 def _process_subscription(
     session, subscription: Subscription, post: Post, messenger: MessengerClient
-) -> None:
+) -> str:
     if repository.is_already_sent(session, subscription.id, post.post_id):
-        return
+        return "already_sent"
 
     post_date = post.posted_at.astimezone(ZoneInfo(settings.timezone)).date()
 
@@ -75,6 +92,7 @@ def _process_subscription(
         image_urls=post.image_urls,
         status=status,
     )
+    return status
 
 
 def _build_message_text(post: Post) -> str:
