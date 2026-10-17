@@ -173,3 +173,42 @@ def test_records_failed_status_when_send_raises(monkeypatch):
     )
 
     assert record_mock.call_args.kwargs["status"] == "failed"
+
+
+def test_run_logs_outcome_per_subscription_and_summary(monkeypatch, caplog):
+    source = MagicMock(get_recent_posts=MagicMock(return_value=[_make_post()]))
+    subscriptions = [
+        _make_subscription(id=1, recipient_psid="a"),
+        _make_subscription(id=2, recipient_psid="b", text_filter="nonexistent"),
+    ]
+    _patch_run(monkeypatch, subscriptions, source)
+
+    with caplog.at_level("INFO", logger=pipeline.logger.name):
+        pipeline.run()
+
+    assert "subscription=1" in caplog.text
+    assert "outcome=sent" in caplog.text
+    assert "subscription=2" in caplog.text
+    assert "outcome=no_matching_post" in caplog.text
+    assert "Run finished: {'sent': 1, 'no_matching_post': 1}" in caplog.text
+
+
+def test_run_logs_already_sent_outcome(monkeypatch, caplog):
+    source = MagicMock(get_recent_posts=MagicMock(return_value=[_make_post()]))
+    _patch_run(monkeypatch, [_make_subscription()], source)
+    monkeypatch.setattr(pipeline.repository, "is_already_sent", lambda *a, **k: True)
+
+    with caplog.at_level("INFO", logger=pipeline.logger.name):
+        pipeline.run()
+
+    assert "outcome=already_sent" in caplog.text
+
+
+def test_run_counts_fetch_failures_in_summary(monkeypatch, caplog):
+    source = MagicMock(get_recent_posts=MagicMock(side_effect=RuntimeError("boom")))
+    _patch_run(monkeypatch, [_make_subscription()], source)
+
+    with caplog.at_level("INFO", logger=pipeline.logger.name):
+        pipeline.run()
+
+    assert "Run finished: {'fetch_failed': 1}" in caplog.text

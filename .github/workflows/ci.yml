@@ -7,6 +7,34 @@ on:
   workflow_call:
 
 jobs:
+  version-bump:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Require version bump when the application changes
+        env:
+          BASE_REF: origin/${{ github.base_ref }}
+        run: |
+          if ! git diff --name-only "$BASE_REF...HEAD" \
+              | grep -qE '^(src/|Dockerfile$|pyproject\.toml$|poetry\.lock$)'; then
+            echo "No application changes, version bump not required."
+            exit 0
+          fi
+          read_version() {
+            python3 -c 'import sys, tomllib; print(tomllib.load(sys.stdin.buffer)["project"]["version"])'
+          }
+          base_version=$(git show "$BASE_REF:pyproject.toml" | read_version)
+          head_version=$(read_version < pyproject.toml)
+          if [ "$base_version" = "$head_version" ]; then
+            echo "Application changed but version is still $head_version; bump it in pyproject.toml." >&2
+            exit 1
+          fi
+          echo "Version bumped: $base_version -> $head_version"
+
   test:
     runs-on: ubuntu-latest
     steps:

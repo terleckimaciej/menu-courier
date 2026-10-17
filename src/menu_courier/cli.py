@@ -1,4 +1,6 @@
 import argparse
+import logging
+import sys
 from urllib.parse import urlparse
 
 from menu_courier.config import settings
@@ -90,6 +92,11 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "run":
+        logging.basicConfig(
+            level=logging.INFO,
+            stream=sys.stdout,
+            format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        )
         _print_database_target()
         run()
     elif args.command == "list-recipients":
