@@ -9,3 +9,4 @@ tests/
 .env.example
 *.md
 !README.md
+infra/
