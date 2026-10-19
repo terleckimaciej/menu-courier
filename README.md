@@ -1,35 +1,28 @@
 # menu-courier
 
+[![CI](https://github.com/terleckimaciej/menu-courier/actions/workflows/ci.yml/badge.svg)](https://github.com/terleckimaciej/menu-courier/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/terleckimaciej/menu-courier)](https://github.com/terleckimaciej/menu-courier/releases)
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
-![Poetry](https://img.shields.io/badge/Poetry-Dependencies-60A5FA?logo=poetry&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Containerization-0db7ed?logo=docker&logoColor=white)
-![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-CI%2FCD-2088FF?logo=githubactions&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-0db7ed?logo=docker&logoColor=white)
+![Cloud Run](https://img.shields.io/badge/Cloud%20Run-containers-4285F4?logo=googlecloud&logoColor=white)
+![Terraform](https://img.shields.io/badge/Terraform-844FBA?logo=terraform&logoColor=white)
 ![Postgres](https://img.shields.io/badge/Postgres-Neon-4169E1?logo=postgresql&logoColor=white)
-![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-ORM-D71F00?logoColor=white)
-![Alembic](https://img.shields.io/badge/Alembic-Migrations-6BA81E?logoColor=white)
-![Apify](https://img.shields.io/badge/Apify-Scraping-FF9012?logoColor=white)
-![Messenger](https://img.shields.io/badge/Messenger-Delivery-00B2FF?logo=messenger&logoColor=white)
-![pytest](https://img.shields.io/badge/pytest-Testing-0A9EDC?logo=pytest&logoColor=white)
-![Ruff](https://img.shields.io/badge/Ruff-Lint%20%2B%20Format-D7FF64?logo=ruff&logoColor=black)
-![pre-commit](https://img.shields.io/badge/pre--commit-Hooks-FAB040?logo=precommit&logoColor=white)
 
 A small, scheduled service that scrapes subscribed Facebook pages and delivers new posts via Messenger — built mainly for Ms. Helena, an elderly family friend who has trouble with her vision and can't check Facebook herself to see the daily menu at her local lunch bars.
 
-It also doubles as a portfolio piece: the goal was to build it the way I would build anything meant for production at work — typed config, migrations, tests, CI, a
-container image, and a scheduled pipeline — rather than a one-off script.
+It runs as a production-style system rather than a script: a Cloud Run Job started by Cloud Scheduler, secrets in Secret Manager, infrastructure in Terraform, and tests and releases through GitHub Actions with keyless authentication to Google Cloud.
+
+**Documentation:** [Architecture](docs/architecture.md) · [Operations](docs/operations.md) · [Cloud Run migration log](docs/cloud-run-migration.md) · [Infrastructure (Terraform)](infra/README.md)
 
 ## How it works
 
 ```mermaid
-%%{init: {'themeVariables': {'fontSize': '15px'}}}%%
+%%{init: {'flowchart': {'nodeSpacing': 20, 'rankSpacing': 30}, 'themeVariables': {'fontSize': '12px'}}}%%
 flowchart TB
-    subgraph gh[GitHub]
-        Actions[GitHub Actions<br/>cron scheduler]
-        Registry[(GHCR<br/>image registry)]
-    end
-
-    subgraph app[menu-courier]
-        Container[Docker container]
+    subgraph gcp[Google Cloud]
+        Scheduler[Cloud Scheduler]
+        Job[Cloud Run Job<br/>container]
+        SM[Secret Manager]
     end
 
     subgraph meta[Meta]
@@ -41,14 +34,18 @@ flowchart TB
     DB[(Postgres<br/>Neon)]
     User((Recipient))
 
-    Actions -->|pulls image| Registry
-    Actions -->|runs| Container
-    Container -->|scrape request| Apify
+    Scheduler -->|starts| Job
+    SM -->|secrets| Job
+    Job -->|scrape| Apify
     Apify -->|reads| FB
-    Container <-->|subscriptions +<br/>delivery history| DB
-    Container -->|send message| MSG
+    Job <-->|subscriptions,<br/>history| DB
+    Job -->|send message| MSG
     MSG -->|delivers to| User
 ```
+
+The stack is serverless end to end: Cloud Scheduler starts a containerized Cloud
+Run Job a few times a day, and Neon scales to zero between runs. Releases are built
+and deployed by GitHub Actions; see [the architecture](docs/architecture.md).
 
 Subscriptions (which page to watch, who receives it, optional text filter, whether
 to include images) are just rows in a table — adding a new restaurant/recipient
@@ -57,21 +54,19 @@ every active subscription: it scrapes the latest matching post, skips it if that
 exact post has already been delivered, and otherwise sends the text and any
 images via Messenger and records the outcome (sent or failed) back in Postgres.
 
-## Why these particular building blocks
+## Why these building blocks
 
-- **Scraping via [Apify](https://apify.com)'s Facebook Posts Scraper**, not a
-  homegrown scraper. Facebook has no practical public API for this, and every
-  free/open-source Facebook scraper we evaluated was effectively abandoned —
-  scraping a platform that actively fights scrapers is a maintenance burden best
-  left to a service built for it. Apify's free tier comfortably covers this
-  project's volume (a few checks a day on one page).
-- **Messenger Send API**, hand-rolled on top of `requests` rather than a wrapper
-  library — the wrapper libraries that exist for this are unmaintained since
-  ~2016, and the API itself is a couple of authenticated HTTP calls, not enough
-  surface to justify a dependency.
-- **Neon (serverless Postgres)** for storage — scales to zero between runs, free
-  tier is generous for this project's tiny footprint, and it's a real database
-  rather than a scraped-together file.
+- **[Apify](https://apify.com)'s Facebook Posts Scraper** for scraping: Facebook has
+  no practical public API for reading page posts, and maintaining a scraper against
+  a platform that fights scrapers is best left to a dedicated service
+  (responsibility included).
+- **Messenger Send API** called directly with `requests`: a couple of authenticated
+  HTTP calls don't justify a wrapper library.
+- **Neon (serverless Postgres)** for storage: scales to zero between runs, and the
+  free tier covers this footprint.
+
+The hosting decisions are covered in the
+[Cloud Run migration log](docs/cloud-run-migration.md).
 
 ## CLI
 
@@ -159,22 +154,22 @@ poetry run pre-commit run --all-files
 
 Pre-commit runs ruff (lint + format), mypy, and detect-secrets. Tests are unit
 tests only — HTTP calls (Apify, Messenger) are mocked via `responses`, and the
-pipeline tests mock the storage layer. There's no database in CI; the real
-scraping/delivery path is verified manually against the live services.
+pipeline tests mock the storage layer.
 
 ## Deployment
 
 - `Dockerfile` builds a multi-stage image (Poetry installs deps in a builder
   stage, only the resulting `.venv` + source ship in the final image).
-- CI (`.github/workflows/ci.yml`) lints and tests on every push/PR. The image is
-  only built and pushed to GHCR when a `v*` tag is pushed — releases are
-  deliberate, not automatic on every merge:
-  ```bash
-  gh release create v0.4.0 --generate-notes
-  ```
-- `.github/workflows/scheduled-send.yml` runs the pipeline on a cron schedule,
-  pulling the `:latest` image from GHCR and pointing it at the production
-  (Neon) database via GitHub Secrets.
+- CI (`.github/workflows/ci.yml`) lints and tests on every push/PR, and requires a
+  version bump when application code changes.
+- Releases are deliberate, not automatic on every merge. Pushing a `v*` tag runs
+  `.github/workflows/release.yml`: it checks the tag against the `pyproject.toml`
+  version, runs the tests, builds the image once, pushes it to GHCR and Artifact
+  Registry, and updates the Cloud Run Job.
+- Cloud Scheduler starts the Job three times a day; secrets come from Secret
+  Manager. The infrastructure is defined in Terraform (`infra/`).
+
+See [docs/operations.md](docs/operations.md) for the release and rollback steps.
 
 ## Known limitations
 
@@ -186,3 +181,5 @@ scraping/delivery path is verified manually against the live services.
   have accepted a Tester/Developer/Admin role on the app. Messaging the general
   public would require Meta's App Review, which is disproportionate for a
   single-recipient personal tool.
+- There is no database in CI: tests are unit tests with the storage layer mocked,
+  and the live scraping and delivery path is verified manually.
