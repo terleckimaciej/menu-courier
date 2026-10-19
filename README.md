@@ -16,36 +16,18 @@ It runs as a production-style system rather than a script: a Cloud Run Job start
 
 ## How it works
 
-```mermaid
-%%{init: {'flowchart': {'nodeSpacing': 20, 'rankSpacing': 30}, 'themeVariables': {'fontSize': '12px'}}}%%
-flowchart TB
-    subgraph gcp[Google Cloud]
-        Scheduler[Cloud Scheduler]
-        Job[Cloud Run Job<br/>container]
-        SM[Secret Manager]
-    end
-
-    subgraph meta[Meta]
-        FB[(Facebook<br/>restaurant page)]
-        MSG[Messenger<br/>Send API]
-    end
-
-    Apify[Apify<br/>Facebook Posts Scraper]
-    DB[(Postgres<br/>Neon)]
-    User((Recipient))
-
-    Scheduler -->|starts| Job
-    SM -->|secrets| Job
-    Job -->|scrape| Apify
-    Apify -->|reads| FB
-    Job <-->|subscriptions,<br/>history| DB
-    Job -->|send message| MSG
-    MSG -->|delivers to| User
-```
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/architecture-dark.svg">
+    <img src="docs/images/architecture-light.svg" width="100%" alt="Architecture: Cloud Scheduler starts the app container (a Cloud Run Job), which reads secrets from Secret Manager, fetches the latest post through a Facebook scraper API, checks and records delivery in Postgres on Neon, and sends it through the Messenger API to the recipient. Terraform defines the Google Cloud resources and GitHub Actions deploys the container.">
+  </picture>
+</p>
 
 The stack is serverless end to end: Cloud Scheduler starts a containerized Cloud
 Run Job a few times a day, and Neon scales to zero between runs. Releases are built
 and deployed by GitHub Actions; see [the architecture](docs/architecture.md).
+Everything runs within free tiers; the numbers are in
+[Costs and limits](docs/cloud-run-migration.md#costs-and-limits).
 
 Subscriptions (which page to watch, who receives it, optional text filter, whether
 to include images) are just rows in a table — adding a new restaurant/recipient

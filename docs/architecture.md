@@ -33,7 +33,7 @@ flowchart LR
 | Component | Details |
 |---|---|
 | Cloud Scheduler `menu-courier-run` | Cron `17 1,6,8 * * *` (UTC). Sends an authenticated request to the Cloud Run Admin API to run the Job. |
-| Cloud Run Job `menu-courier` | 1 vCPU, 1 GiB, 600 s task timeout, no retries. Runs `python -m menu_courier.cli run`. |
+| Cloud Run Job `menu-courier` | 1 vCPU, 1 GiB, 600 s task timeout, no retries. Runs `python -m menu_courier.cli run`; a typical execution takes 10-20 s. |
 | Artifact Registry `menu-courier` | Docker repository the Job pulls from. Cleanup policies keep the 5 newest versions and delete untagged images after 7 days and anything older than 30 days. |
 | GHCR | Second copy of every released image, kept as a fallback and visible next to the code. |
 | Secret Manager | `DATABASE_URL`, `FB_PAGE_ACCESS_TOKEN`, `APIFY_API_TOKEN`, injected as environment variables at start. |
