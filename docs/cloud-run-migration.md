@@ -163,11 +163,12 @@ See [`infra/README.md`](../infra/README.md).
 Checked against the vendors' documentation, with the aim of staying at zero:
 
 - **Neon (free plan):** 100 compute-unit hours a month, 1 GB storage, 5 GB egress, autosuspend after 5 minutes. Usage is a few CU-hours a month.
-- **Cloud Run Jobs:** one execution takes about 24 s on 1 vCPU and 1 GiB, so roughly 2,900 vCPU-seconds a month. The free-tier allowance for `europe-central2` was not confirmed on the official pricing page; even with no free tier the estimate is well under 1 USD a month.
+- **Cloud Run Jobs:** one execution typically takes 10-20 s on 1 vCPU and 1 GiB, so about 1,350 vCPU-seconds a month at three runs a day. The pricing page lists a free tier of 240,000 vCPU-seconds and 450,000 GiB-seconds a month ("based on us-central1 pricing"), so usage is under 1% of it. Even with no free tier, the `europe-central2` price (0.0000216 USD per vCPU-second, 0.0000024 USD per GiB-second) comes to about 3 cents a month.
 - **Cloud Scheduler:** the first three jobs per billing account are free; this project uses one.
 - **Secret Manager:** 6 active versions and 10,000 access operations a month are free, counted per billing account. A version counts as active while enabled **or disabled**, so superseded versions should be destroyed, not disabled. Three secrets, about 360 reads a month.
 - **Artifact Registry:** 0.5 GB free; the repository holds under 100 MB and the cleanup policy keeps it bounded.
 - **Egress to Neon** (a different provider) is billed as internet egress on the Google side, but it is kilobytes per run.
+- **Apify (free plan):** calls are paid in platform credits; the plan includes 5 USD of credit a month, and this workload stays well inside it because posts are fetched once per source, not once per subscription.
 
 ## Follow-ups
 
